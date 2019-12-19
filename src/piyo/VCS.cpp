@@ -16,6 +16,16 @@ const Piyo::VCS::CallbackMap& Piyo::VCS::VCSBase::getCallbacks() const
   return this->callbacks_;
 }
 
+const std::string& Piyo::VCS::VCSBase::getResult() const
+{
+  return this->result_;
+}
+
+void Piyo::VCS::VCSBase::setResult(const std::string& result)
+{
+  this->result_ = result;
+}
+
 const Piyo::VCS::CacheMap& Piyo::VCS::VCSBase::getCaches() const
 {
   return this->caches_;
@@ -25,7 +35,7 @@ bool Piyo::VCS::VCSBase::execute(const std::string& commandline, const std::stri
 {
   auto& executor = Executor::getInstance();
   auto result = executor.execute(commandline, currentDirectory);
-  this->result_ = executor.getStdout();
+  this->setResult(std::move(executor.getStdout()));
   return result == 0;
 }
 
@@ -36,15 +46,19 @@ void Piyo::VCS::VCSBase::addCallback(const std::string& key, ParsingCallback cal
 
 bool Piyo::VCS::VCSBase::parse()
 {
+  return this->parse(this->getResult(), this->getCallbacks());
+}
+
+bool Piyo::VCS::VCSBase::parse(const std::string& result, const Piyo::VCS::CallbackMap& callbacks)
+{
   bool r = true;
 
-  const auto& callbacks = this->getCallbacks();
   for (auto itr = std::begin(callbacks); itr != std::end(callbacks); ++itr)
   {
     auto& key = itr->first;
     auto& callback = itr->second;
 
-    this->caches_[key] = callback(key, this->result_);
+    this->caches_[key] = callback(key, result_);
   }
 
   return r;

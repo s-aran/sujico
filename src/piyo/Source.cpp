@@ -69,8 +69,8 @@ namespace Piyo
     static inline const std::map<VCS, const std::vector<std::string>> Keys =
     {
       { VCS::HG    , { "changeset" }},
-      { VCS::SVN_HG, { "revision", "hash", }},
-      { VCS::GIT_HG, { "longhash" }},
+      { VCS::SVN_HG, { "revision", }},
+      { VCS::GIT_HG, { "longhash", "hash" }},
       { VCS::COMMON, { "date", "time", "utcdate", "utctime", "commitlog", "tag", "branch", }},
     };
   };
@@ -102,6 +102,13 @@ inline bool lazyCompare(const std::string& a, const std::string& b)
   const auto lca = boost::to_lower_copy(a);
   const auto lcb = boost::to_lower_copy(b);
   return lca == lcb;
+}
+
+const auto getGitLog(const std::string& path = "")
+{
+  auto vcs = VCS::Git();
+  auto rr = vcs.getCaches();
+  return std::move(rr);
 }
 
 const auto getHgLog(const std::string& path = "")
@@ -337,7 +344,21 @@ const std::string replace(const std::string& format, const toml::table& table)
 
           smatch sm2;
           auto f2 = (regex_search(k, sm2, fre) ? sm2[1].str() : "");
-          const auto vcsmap = getHgLog();
+          
+          VCS::CacheMap vcsmap;
+          if (f == Placeholders::Vcses.at(Placeholders::VCS::SVN))
+          {
+            // 
+          }
+          else if (f == Placeholders::Vcses.at(Placeholders::VCS::GIT))
+          {
+            vcsmap = getGitLog();
+          }
+          else if (f == Placeholders::Vcses.at(Placeholders::VCS::HG))
+          {
+            vcsmap = getHgLog();
+          }
+
           if (found)
           {
             value = formatValue(k, vcsmap, f2);

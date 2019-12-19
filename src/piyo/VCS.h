@@ -5,11 +5,13 @@
 
 #define NAMESPACE_REGEX boost
 
+
 namespace Piyo
 {
   class VCS
   {
-  private:
+    // TODO: back to private
+  public:
     using ParsingCallback = std::function<const std::string(const std::string&, const std::string&)>;
     using CallbackMap = std::map<std::string, ParsingCallback>;
     using CacheMap = std::map<std::string, std::string>;
@@ -22,14 +24,18 @@ namespace Piyo
       CallbackMap callbacks_;
       CacheMap caches_;
 
+      void setResult(const std::string& result);
+
     protected:
       const CallbackMap& getCallbacks() const;
+      const std::string& getResult() const;
 
       bool execute(const std::string& commandline, const std::string& currentDirectory = "");
-      virtual bool executeVcs() = 0;
+      
+      bool parse();
+      bool parse(const std::string& result, const CallbackMap& callbacks);
 
       void addCallback(const std::string& key, ParsingCallback callback);
-      bool parse();
 
     public:
       // TODO: back to protected
@@ -44,7 +50,7 @@ namespace Piyo
     class Svn : public VCSBase
     {
     private:
-      virtual bool executeVcs() override;
+      bool executeVcs();
 
     public:
       Svn();
@@ -54,7 +60,10 @@ namespace Piyo
     class Git : public VCSBase
     {
     private:
-      virtual bool executeVcs() override;
+      bool executeVcs();
+      bool getShortHash();
+      void prepareCallbacks();
+      CallbackMap createCallbackMapForShortHash();
 
     public:
       Git();
@@ -64,7 +73,7 @@ namespace Piyo
     class Mercurial : public VCSBase
     {
     private:
-      virtual bool executeVcs() override;
+      bool executeVcs();
       void prepareCallbacks();
 
     public:

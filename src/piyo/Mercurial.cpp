@@ -5,16 +5,12 @@
 
 Piyo::VCS::Mercurial::Mercurial()
 {
-  bool r = this->executeVcs();
-
-  if (!r)
-  {
-    std::cerr << "internal error" << std::endl;
-    return;
-  }
+  bool r = true;
 
   this->prepareCallbacks();
+  r &= this->executeVcs();
   r &= this->parse();
+
   if (!r)
   {
     std::cerr << "internal error" << std::endl;
@@ -168,15 +164,13 @@ void Piyo::VCS::Mercurial::prepareCallbacks()
 
 bool Piyo::VCS::Mercurial::executeVcs()
 {
-  bool r = true;
-
   static constexpr auto commandLine = "hg log -l 1 -b .";
 
   static constexpr auto envKey = "LANGUAGE";
   static constexpr auto envVal = "en_US.UTF-8";
 
   EnvironmentVariable::getInstance().set(envKey, envVal);
-  r = this->execute(commandLine);
+  bool r = this->execute(commandLine);
   EnvironmentVariable::getInstance().remove(envKey);
 
   return r;
