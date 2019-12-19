@@ -8,7 +8,7 @@
 
 namespace Piyo
 {
-  constexpr auto ApplicationName = "suji command";
+  constexpr auto ApplicationName = "sujico (suji command)";
   constexpr auto DefaultConfigFile = ".sujiconf.toml";
 
   // toml key

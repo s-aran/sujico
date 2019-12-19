@@ -4,14 +4,14 @@ struct Version
 {
   static inline constexpr auto Major            = "0";
   static inline constexpr auto Minor            = "00";
-  static inline constexpr auto Build            = "262";
+  static inline constexpr auto Build            = "263";
   static inline constexpr auto Milestone        = "beta";
-  static inline constexpr auto MilestoneVersion = "2a";
-  static inline constexpr auto VcsRevision      = "27";
-  static inline constexpr auto VcsHash          = "78b3e06947e3";
-  static inline constexpr auto datetime         = "2019/12/16 23:55:17";
+  static inline constexpr auto MilestoneVersion = "3";
+  static inline constexpr auto VcsRevision      = "30";
+  static inline constexpr auto VcsHash          = "0a54c165b25d";
+  static inline constexpr auto datetime         = "2019/12/19 15:00:49";
   static inline constexpr auto tag              = "tip";
-  static inline constexpr auto VersionString    = "0.00.262 beta-2a (27:78b3e06947e3)";
+  static inline constexpr auto VersionString    = "0.00.263 beta-3 (30:0a54c165b25d)";
 
   static inline auto get(const std::string& pre = "", const std::string& post = "", const std::string& versionString = "version: ")
   {
