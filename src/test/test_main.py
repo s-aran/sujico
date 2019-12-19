@@ -10,6 +10,7 @@ import shlex
 import platform
 import re
 import datetime
+import stat
 
 DefaultConfName = '.sujiconf.toml'
 
@@ -18,14 +19,12 @@ def is_windows():
 
 MainProgram='suji.exe' if is_windows() else 'suji'
 SourcePath = os.path.join(R'../x64/Release/' if is_windows() else R'../piyo/', MainProgram)
-BasePath = os.path.join(R'bin/', MainProgram)
+BasePath = os.path.join('bin', MainProgram)
 
 def execute(cmdline):
     is_win = is_windows()
-    if is_win:
-        cmdline = cmdline.replace('/', R'\\')
     enc = 'shiftjis' if is_win else 'utf-8'
-    sl = shlex.split(cmdline if is_win else shlex.quote(cmdline))
+    sl = shlex.split(cmdline if is_win else shlex.quote(cmdline), posix=not is_win)
     p = subprocess.Popen(sl, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding=enc)
 
     p.wait()
@@ -46,10 +45,13 @@ def assert_exec_res(cmdlines, expected_r, expected_o, expected_e, show_r=False, 
     r, o, e = execute(' '.join(cmdlines) if type(cmdlines) == list else cmdlines)
 
     if show_r:
+        print('======== return code ========')
         print(r)
     if show_o:
+        print('======== stdout ========')
         print(o)
     if show_e:
+        print('======== stderr ========')
         print(e)
 
     assert r          == expected_r
@@ -82,6 +84,10 @@ def generate_toml(kvdic, fmt, file=DefaultConfName):
 class TestSuji(object):
     @classmethod
     def setup_class(cls):
+        cls.git_testdir = './gittest/'
+        if os.path.exists(cls.git_testdir):
+            shutil.rmtree(cls.git_testdir, ignore_errors=False, onerror=lambda f, p, e: (os.chmod(p, stat.S_IWRITE), f(p)))
+
         if os.path.exists(BasePath):
             shutil.rmtree('bin')
 
@@ -119,7 +125,7 @@ class TestSuji(object):
 
         r, o, e = execute(' '.join(cmdlines))
         assert r == 0 
-        assert re.match('^suji command version: .*', o.rstrip()) is not None
+        assert re.match('^sujico \(suji command\) version: .*', o.rstrip()) is not None
         assert e == ''
 
     def test_missing_default_conf(self):
@@ -169,7 +175,7 @@ toml parse error''')
 
         r, o, e = execute(' '.join(cmdlines))
         assert r == 0 
-        assert re.match('^suji command options:.*', o.rstrip()) is not None
+        assert re.match('^sujico \(suji command\) options:.*', o.rstrip()) is not None
         assert e == ''
 
 
@@ -479,6 +485,39 @@ toml parse error''')
             )
 
         assert_exec_res(BasePath, 0, expected, '')
+        
 
+    def test_git(self):
+        os.makedirs(TestSuji.git_testdir)
 
+        old_cd = os.getcwd()
+        os.chdir(TestSuji.git_testdir)
 
+        execute('git init .')
+        execute('git config --local user.name "John Doe"')
+        execute('git config --local user.email "john.doe@localhost.local"')
+
+        tmp_name = 'test'
+        with open(tmp_name, 'w') as f:
+            f.write('testtest')
+
+        execute('git add {0}'.format(tmp_name))
+        execute('git commit -m "initial commit"')
+
+        r, o, e = execute('git rev-parse HEAD')
+        longhash = o.rstrip()
+        r, o, e = execute('git rev-parse --short HEAD')
+        shorthash = o.rstrip()
+        
+
+        fmt = '${git:hash},${git:longhash}'
+        generate_toml({}, fmt)
+        
+        cmdlines = [
+            os.path.join('..', BasePath),
+            ]
+
+        expected  = '{0},{1}'.format(shorthash, longhash)
+        assert_exec_res(cmdlines, 0, expected, '', show_r = True, show_o=True, show_e=True)
+         
+   
